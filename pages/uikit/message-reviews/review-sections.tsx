@@ -45,7 +45,7 @@ export const Review = () => {
     const itemTemplate = (reviews: any) => {
 
         const itemTemplate = (item: any) => {
-            return <img src={item} alt={item.alt} height={220} style={{ width: '350px', display: 'block', objectFit: "cover", borderRadius: 15 }} />;
+            return <img src={item} alt={item.alt} height={170} style={{ width: '250px', display: 'block', objectFit: "cover" }} />;
         };
 
         const thumbnailTemplate = (item: any) => {
@@ -77,7 +77,7 @@ export const Review = () => {
 
                                     <Rating value={reviews.rating / 2} readOnly cancel={false} className="mt-1"></Rating>
 
-                                    <div className="flex align-items-center gap-3 mt-3 " style={{ width: '800px' }} >
+                                    <div className="flex align-items-center gap-3 mt-3 " style={{ minWidth: '600px' }} >
                                         <p className="text-md line-clamp-2">{reviews.text}</p>
                                     </div>
                                 </div>
@@ -85,9 +85,7 @@ export const Review = () => {
 
 
                         </div>
-                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
                             <div>
-
                                 <Button
                                     icon="pi pi-trash"
                                     rounded
@@ -96,10 +94,9 @@ export const Review = () => {
                                     className="p-button-rounded"
                                     onClick={() => removeReviews(reviews.id)}
                                 >
-
                                 </Button>
                             </div>
-                        </div>
+                       
                     </div>
                 </div>
             </div>

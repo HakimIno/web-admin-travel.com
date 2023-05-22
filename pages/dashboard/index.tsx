@@ -8,12 +8,15 @@ import { Menu } from "primereact/menu";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { fetchOrdersData, fetchReviewsData, fetchUsersData } from "./api/fetch-data";
-import { Orders, Reviews, Users } from "../types/interface";
-import axios from "axios";
-import { useRouter } from "next/router";
-import middleware from "./_middleware";
 
+
+import { useSession } from "next-auth/react";
+import { Orders, Reviews, Users } from "../../types/interface";
+import { fetchOrdersData, fetchReviewsData, fetchUsersData } from "../api/fetch-data";
+import { NextResponse } from "next/server";
+import { Secret, verify } from "jsonwebtoken";
+import middleware from "../_middleware";
+import axios from "axios";
 
 interface MonthlySummary {
   hotel_bookings: number;
@@ -21,7 +24,7 @@ interface MonthlySummary {
 }
 
 
-function Dashboard() {
+const Dashboard = () => {
 
   const [chartData, setChartData] = useState({});
   const [chartOptions, setChartOptions] = useState({});
@@ -30,9 +33,6 @@ function Dashboard() {
   const [orders, setOrders] = useState<Orders[]>([])
   const [review, setReview] = useState<Reviews[]>([])
   const [monthlySummary, setMonthlySummary] = useState<{ [month: string]: MonthlySummary }>({});
-  const router = useRouter();
-
-  
 
   useEffect(() => {
     const documentStyle = getComputedStyle(document.documentElement);
@@ -175,6 +175,8 @@ function Dashboard() {
 
     return summarizedData;
   };
+
+
 
   return (
     <div className="grid">
@@ -322,4 +324,5 @@ function Dashboard() {
 };
 
 export default Dashboard;
+
 

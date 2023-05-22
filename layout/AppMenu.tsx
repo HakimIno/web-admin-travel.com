@@ -34,9 +34,14 @@ const AppMenu = () => {
           to: "/uikit/manage-hotels",
         },
         {
-          label: "จัดการคำสั่งซื้อ",
+          label: "จัดการคำสั่งซื้อจองทัวร์",
           icon: "pi pi-fw pi-shopping-cart",
           to: "/uikit/floatlabel",
+        },
+        {
+          label: "จัดการคำสั่งซื้อจองโรงแรม",
+          icon: "pi pi-fw pi-shopping-cart",
+          to: "/uikit/orderHotels",
         },
         {
           label: "รีวิวทั้งหมด",

@@ -1,13 +1,15 @@
-import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { TabPanel, TabView } from 'primereact/tabview';
 import React, { useEffect, useRef, useState } from 'react'
-import { db } from '../../api/firebase';
+import { db, storage } from '../../api/firebase';
 import { Toast } from 'primereact/toast';
 import { fetchNotificationData } from '../../api/fetch-data';
 import { DataView } from 'primereact/dataview';
 import moment from 'moment';
+import { FileUpload } from 'primereact/fileupload';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 interface Notifys {
   id: number;
@@ -21,30 +23,40 @@ const Notification = () => {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [imageURL, setImageURL] = useState("")
 
   const [notification, setNotification] = useState<Notifys[]>([])
 
+  const handleFileUpload = async (event: any) => {
+    const file = event.files[0];
+    const storageRef = ref(storage, `images/notification/${Date.now()}${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURLPoster = await getDownloadURL(storageRef);
+    setImageURL(downloadURLPoster)
+    toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+  };
+
   const handelUpload = async () => {
-    const notifysCollectionRef = collection(db, 'notifys');
-    const querySnapshot = await getDocs(notifysCollectionRef);
-    const notifysData = querySnapshot.docs.map((doc) => doc.data());
 
     const date = new Date()
     const formattedDate = moment(date).format('DD/MMM/YY');
 
     const notifys = {
-      id: notifysData.length + 1,
       title: title,
       description: description,
-      date: formattedDate
+      date: formattedDate,
+      image: imageURL
     }
 
-    await setDoc(doc(db, "notifys", `notifys-ID-${notifysData.length + 1}`), notifys)
+    await addDoc(collection(db, "notifys"), notifys)
+
+    //await setDoc(doc(db, "notifys", `notifys-ID-${notifysData.length + 1}`), notifys)
 
     toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
     window.location.reload()
     setTitle("")
     setDescription("")
+    setImageURL('')
   }
 
   useEffect(() => {
@@ -80,15 +92,21 @@ const Notification = () => {
         <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4 justify-content-between align-items-center">
           <div >
             <div style={{ fontWeight: 'bold', fontSize: 16, }}>Title:</div>
-            <div className="">{item.title}</div>
+            <div className="line-clamp-2 w-12rem">
+              <img src={item.image} style={{ width: 150, height: 75}} alt='' />
+            </div>
+          </div>
+          <div >
+            <div style={{ fontWeight: 'bold', fontSize: 16, }}>Title:</div>
+            <div className="line-clamp-2 w-12rem">{item.title}</div>
           </div>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: 16, }}>รายละเอียด:</div>
-            <div className="">{item.description}</div>
+            <div className="line-clamp-2 w-12rem">{item.description}</div>
           </div>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: 16, }}>วันที่:</div>
-            <div className="">{item.date}</div>
+            <div className="line-clamp-2 w-12rem">{item.date}</div>
           </div>
 
           <Button
@@ -126,6 +144,13 @@ const Notification = () => {
                 <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รายละเอียด</label>
                 <InputText id="title" type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
+
+              <div className="field">
+                <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เลือกรูปที่จะแจ้งเตือน</label>
+               
+              </div>
+
+
 
               <div className='mt-6'>
 

@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 
 
@@ -32,6 +32,41 @@ export const fetchOrdersData = async () => {
         console.log('Error getting users data:', error);
     }
 };
+
+export const fetchOrdersPlaceData = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==' ,'PLACE'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
+export const fetchOrdersHotelsData = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==' ,'HOTELS'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
 
 export const fetchReviewsData = async () => {
     try {

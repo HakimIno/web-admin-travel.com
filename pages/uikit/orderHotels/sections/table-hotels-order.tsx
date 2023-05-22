@@ -2,22 +2,21 @@ import { Column } from "primereact/column"
 import { DataTable } from "primereact/datatable"
 import { Tag } from "primereact/tag"
 import { useEffect, useState } from "react";
-import { fetchOrdersData, fetchOrdersPlaceData } from "../../../api/fetch-data";
+import { fetchOrdersData, fetchOrdersHotelsData } from "../../../api/fetch-data";
 import { Orders } from "../../../../types/interface";
 import { Button } from "primereact/button";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../api/firebase";
 import { Image } from 'primereact/image';
 
-export const TableDataOrder = () => {
+export const TableHotelsOrder = () => {
     const [orders, setOrders] = useState<Orders[]>([])
-
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const ordersData = await fetchOrdersPlaceData();
+                const ordersData = await fetchOrdersHotelsData();
                 setOrders(ordersData as unknown as Orders[]);
             } catch (error) {
                 console.log('Error:', error);
@@ -71,7 +70,7 @@ export const TableDataOrder = () => {
 
     return (
         <>
-            <DataTable value={orders} tableStyle={{ minWidth: '100%' }} showGridlines dataKey="id"  >
+            <DataTable value={orders}  showGridlines dataKey="id"  >
                 <Column field="orderID" header="รหัสคำสั่งชื้อ" style={{ minWidth: '12rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-1" >{rowData.orderID}</div>}></Column>
                 <Column field="title" header="แพ็คเกจ" style={{ minWidth: '12rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-12rem">{rowData.title}</div>} ></Column>
                 <Column field="type" header="หมวดหมู่" style={{ minWidth: '8rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-8rem">{rowData.type === 'PLACE' ? ('ทัวร์') : ('โรงแรม')}</div>}></Column>
@@ -80,9 +79,9 @@ export const TableDataOrder = () => {
                 <Column field="lastname" header="นามสกุล" style={{ minWidth: '10rem', textAlign: 'center' }}></Column>
                 <Column field="phonnumber" header="เบอร์โทรศัพท์" style={{ minWidth: '10rem', textAlign: 'center' }}></Column>
                 <Column field="email" header="อีเมล" style={{ minWidth: '10rem', textAlign: 'center' }}></Column>
-                <Column field="date" header="วันที่จอง" style={{ minWidth: '6rem', textAlign: 'center' }} body={(rowData) => <div className="">{rowData.date}{rowData.checkInDate}</div>}></Column>
-                <Column field="adults" header="ผู้ใหญ่" style={{ minWidth: '6rem', textAlign: 'center' }}></Column>
-                <Column field="children" header="เด็ก" style={{ minWidth: '6rem', textAlign: 'center' }}></Column>
+                <Column field="checkInDate" header="วันที่เช็คอิน" style={{ minWidth: '6rem', textAlign: 'center' }}></Column>
+                <Column field="checkOutDate" header="วันที่เช็คเอาท์" style={{ minWidth: '6rem', textAlign: 'center' }}></Column>
+                <Column field="selectRoom" header="ประเภทห้อง" style={{  textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-8rem">{rowData.selectRoom}</div>}></Column>
                 <Column
                     field=""
                     header="สลีป"

@@ -82,7 +82,7 @@ export const Packages = () => {
     const removeTrip = async (tripsId: any) => {
         try {
             setLoading(true);
-            const tripRef = doc(db, 'trips', `trips-ID-${tripsId}`);
+            const tripRef = doc(db, 'trips', tripsId);
             await deleteDoc(tripRef);
             console.log('Trip removed successfully!');
             window.location.reload();

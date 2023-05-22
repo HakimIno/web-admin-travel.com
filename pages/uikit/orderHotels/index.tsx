@@ -1,6 +1,7 @@
-import React  from 'react';
+import React from 'react';
+import { TableHotelsOrder } from './sections/table-hotels-order';
 
-import { TableDataOrder } from './sections/table-data-order';
+
 
 const FloatLabelDemo = () => {
 
@@ -11,7 +12,7 @@ const FloatLabelDemo = () => {
             <div className="grid p-fluid mt-3">
                 <div className="field col-12">
 
-                    <TableDataOrder />
+                    <TableHotelsOrder />
                 </div>
 
             </div>

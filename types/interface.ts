@@ -19,6 +19,8 @@ export interface Orders {
     adults: number,
     children: number,
     status: string
+    checkInDate: string,
+    type: string
 }
 
 export interface Reviews {

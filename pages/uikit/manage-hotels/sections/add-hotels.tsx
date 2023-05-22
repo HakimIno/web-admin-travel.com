@@ -1,11 +1,13 @@
-import { collection, doc, getDocs, setDoc } from "firebase/firestore"
+import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore"
 import { Button } from "primereact/button"
 import { InputNumber } from "primereact/inputnumber"
 import { InputText } from "primereact/inputtext"
 import { InputTextarea } from "primereact/inputtextarea"
 import { useRef, useState } from "react"
-import { db } from "../../../api/firebase"
+import { db, storage } from "../../../api/firebase"
 import { Toast } from "primereact/toast"
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
+import { FileUpload } from "primereact/fileupload"
 
 export const AddHotels = () => {
     const toast = useRef<any>(null);
@@ -20,28 +22,46 @@ export const AddHotels = () => {
     const [rating, setRating] = useState(0)
     const [inputValues, setInputValues] = useState(['']);
 
+    const [gallery, setGallery] = useState<string[]>([]);
+
+    const handleFileUpload = async (event: any) => {
+        const file = event.files[0];
+        const storageRef = ref(storage, `images/poster_hotels/${Date.now()}${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURLPoster = await getDownloadURL(storageRef);
+        setImageURL(downloadURLPoster)
+        toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+    };
+
+    const handleFileFireUpload = async (event: any) => {
+        const files = event.files;
+        for (const file of files) {
+            const storageRef = ref(storage, `images/gallery_hotels/${Date.now()}${file.name}`);
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            setGallery((prevGallery: string[]) => [...prevGallery, downloadURL]);
+        }
+    };
 
     const handelUpload = async () => {
-        const hotelsCollectionRef = collection(db, 'hotels');
-        const querySnapshot = await getDocs(hotelsCollectionRef);
 
-        const hotelsData = querySnapshot.docs.map((doc) => doc.data());
-
-        const newTrip = {
-            id: hotelsData.length + 1,
+        const newHotels = {
             title: title,
             image: imageURL,
             map_location: map_location,
             tripsId: tripsId,
             location: location,
-            gallery: inputValues,
+            gallery: gallery,
             description: description,
             rating: rating,
+            option_room: inputValues,
             pricePeerDay: pricePeerDay,
             type: "HOTELS"
         };
 
-        await setDoc(doc(db, "hotels", `hotels-ID-${hotelsData.length + 1}`), newTrip)
+        await addDoc(collection(db, "hotels"), newHotels)
+
+        //await setDoc(doc(db, "hotels", `hotels-ID-${hotelsData.length + 1}`), newTrip)
 
         toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
 
@@ -53,6 +73,9 @@ export const AddHotels = () => {
         setDescription("");
         setRating(0);
         setPricePeerDay("");
+        setInputValues([""])
+
+        window.location.reload()
     }
 
 
@@ -91,7 +114,7 @@ export const AddHotels = () => {
                 <InputText
                     id={`input-${index}`}
                     type="text"
-                    placeholder='ใส่ url รูปภาพห้องพัก'
+                    placeholder='ใส่ตัวเลือกห้อง เช่น ห้องพิเศษ'
                     value={value}
                     onChange={(e) => handleInputChange(e, index)}
                 />
@@ -109,8 +132,8 @@ export const AddHotels = () => {
                 <InputText id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div className="field">
-                <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ (URL)</label>
-                <InputText id="image" type="text" value={imageURL} onChange={(e) => setImageURL(e.target.value)} />
+                <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ <span className="text-red-500 text-sm">*เลือกรูปแล้วจะอัปโหลดอัตโนมัติ</span></label>
+                <FileUpload mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
             </div>
             <div className="field">
                 <label htmlFor="location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ประเทศ</label>
@@ -140,11 +163,24 @@ export const AddHotels = () => {
                 <InputNumber value={rating} onValueChange={(e: any) => setRating(e.value)} min={0} max={10} minFractionDigits={1} />
             </div>
             <div className="field" >
-                <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มรูปภาพแนะนำ(gallery)</label>
+                <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มรูปภาพแนะนำ(gallery) <span className="text-red-500 text-sm">* 5 รูป</span></label>
             </div>
-            <Button icon="pi pi-plus" onClick={handleAddInput} disabled={inputValues.length >= 5} />
-            {renderInputs()}
+            <FileUpload
+                name="demo[]"
+                url={'http://localhost:3001/api/upload'}
+                multiple
+                accept="image/*"
+                maxFileSize={2000000}
+                emptyTemplate={<p className="m-0">ลากและวางไฟล์ที่นี่เพื่ออัปโหลด.</p>}
+                onUpload={handleFileFireUpload}
+            />
 
+            <div className="field" >
+                <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มตัวเลือกห้อง</label>
+            </div>
+            <Button icon="pi pi-plus" aria-label="add" onClick={handleAddInput} />
+
+            {renderInputs()}
 
             <div className='mt-6'>
 

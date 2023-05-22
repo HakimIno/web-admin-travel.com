@@ -1,12 +1,14 @@
-import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { Button } from 'primereact/button'
 import { InputText } from 'primereact/inputtext'
 import { TabPanel, TabView } from 'primereact/tabview'
 import { Toast } from 'primereact/toast'
 import React, { useEffect, useRef, useState } from 'react'
-import { db } from '../../api/firebase'
+import { db, storage } from '../../api/firebase'
 import { fetchPublic_RelationsData } from '../../api/fetch-data'
 import { DataView } from 'primereact/dataview'
+import { FileUpload } from 'primereact/fileupload'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
 interface Publics {
     id: number,
@@ -15,22 +17,33 @@ interface Publics {
 const PublicRelations = () => {
 
     const [urlImagePromo, setUrlImagePromo] = useState("")
+    const [title, setTitle] = useState('')
+    const [description, setDescription] = useState('')
     const [loading, setLoading] = useState(false);
     const toast = useRef<any>(null);
 
     const [public_relations, setPublic_relations] = useState<Publics[]>([])
 
+    const handleFileUpload = async (event: any) => {
+        const file = event.files[0];
+        const storageRef = ref(storage, `images/promotion/${Date.now()}${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURLPoster = await getDownloadURL(storageRef);
+        setUrlImagePromo(downloadURLPoster)
+        toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+    };
+
     const handelUpload = async () => {
-        const public_relationsCollectionRef = collection(db, 'public-relations');
-        const querySnapshot = await getDocs(public_relationsCollectionRef);
-        const public_relationsData = querySnapshot.docs.map((doc) => doc.data());
 
         const public_relations = {
-            id: public_relationsData.length + 1,
+            title: title,
+            description: description,
             image: urlImagePromo
         }
 
-        await setDoc(doc(db, "public-relations", `public-relations-ID-${public_relationsData.length + 1}`), public_relations)
+        await addDoc(collection(db, "public-relations"), public_relations)
+
+        //await setDoc(doc(db, "public-relations", `public-relations-ID-${public_relationsData.length + 1}`), public_relations)
 
         toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
         window.location.reload()
@@ -69,8 +82,16 @@ const PublicRelations = () => {
         return (
             <div className="col-12">
                 <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4 justify-content-between align-items-center">
-                    <img height={200} style={{ width: '400px', display: 'block', objectFit: 'cover', borderRadius: 15 }} src={item.image} alt={item.image} />
+                    <img height={200} style={{ width: '300px', display: 'block', objectFit: 'cover', borderRadius: 15 }} src={item.image} alt={item.image} />
 
+                    <div >
+                        <div style={{ fontWeight: 'bold', fontSize: 16, }}>Title:</div>
+                        <div className="line-clamp-2 w-12rem">{item.title}</div>
+                    </div>
+                    <div >
+                        <div style={{ fontWeight: 'bold', fontSize: 16, }}>รายละเอียด:</div>
+                        <div className="line-clamp-2 w-12rem">{item.description}</div>
+                    </div>
                     <Button
                         icon="pi pi-trash"
                         rounded
@@ -100,7 +121,15 @@ const PublicRelations = () => {
                         <TabPanel header="เพิ่มประชาสัมพันธ์">
                             <div className="field">
                                 <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพประชาสัมพันธ์ (URL)</label>
-                                <InputText id="title" type="text" value={urlImagePromo} onChange={(e) => setUrlImagePromo(e.target.value)} />
+                                <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" maxFileSize={1000000} onUpload={handleFileUpload} auto chooseLabel="Browse" />
+                            </div>
+                            <div className="field">
+                                <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Title</label>
+                                <InputText id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+                            </div>
+                            <div className="field">
+                                <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รายละเอียด</label>
+                                <InputText id="title" type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
                             </div>
                             <div className='mt-6'>
 

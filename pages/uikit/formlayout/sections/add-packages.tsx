@@ -2,12 +2,13 @@ import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore"
 import { Button } from "primereact/button"
 import { InputText } from "primereact/inputtext"
 import { useRef, useState } from "react"
-import { db } from "../../../api/firebase"
+import { db, storage } from "../../../api/firebase"
 import { InputTextarea } from "primereact/inputtextarea"
 import { InputNumber } from "primereact/inputnumber"
 import { Dropdown } from "primereact/dropdown"
 import { Toast } from "primereact/toast"
-
+import { FileUpload, FileUploadHandlerEvent } from 'primereact/fileupload';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 export const AddPackages = () => {
     const toast = useRef<any>(null);
     //State Data
@@ -19,33 +20,50 @@ export const AddPackages = () => {
     const [tripsDay, setTripsDay] = useState("")
     const [rating, setRating] = useState(0)
     const [price, setPrice] = useState("")
-    const [inputValues, setInputValues] = useState(['']);
+    const [childrenPrice, setChildrenPrice] = useState("")
+    const [gallery, setGallery] = useState<string[]>([]);
     const [inputValuesTripsDay, setInputValuesTripsDay] = useState(['']);
 
 
+    const handleFileUpload = async (event: any) => {
+        const file = event.files[0];
+        const storageRef = ref(storage, `images/poster/${Date.now()}${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURLPoster = await getDownloadURL(storageRef);
+        setImageURL(downloadURLPoster)
+        toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+    };
+
+    const handleFileFireUpload = async (event: any) => {
+        const files = event.files;
+        for (const file of files) {
+            const storageRef = ref(storage, `images/gallery/${Date.now()}${file.name}`);
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            setGallery((prevGallery: string[]) => [...prevGallery, downloadURL]);
+        }
+    };
+
     const handleUpload = async () => {
         try {
-            const tripsCollectionRef = collection(db, 'trips');
-            const querySnapshot = await getDocs(tripsCollectionRef);
-
-            const tripsData = querySnapshot.docs.map((doc) => doc.data());
-
             const newTrip = {
-                id: tripsData.length + 1,
                 title: title,
                 image: imageURL,
                 location: location,
                 category: category,
                 description: description,
-                gallery: inputValues,
+                gallery: gallery,
                 tripsDay: tripsDay,
                 rating: rating,
                 detailsTripsDay: inputValuesTripsDay,
                 price: price,
+                childrenPrice: childrenPrice,
                 type: "PLACE"
             };
 
-            await setDoc(doc(db, "trips", `trips-ID-${tripsData.length + 1}`), newTrip)
+            await addDoc(collection(db, "trips"), newTrip)
+
+            //await setDoc(doc(db, "trips", `trips-ID-${tripsData.length + 1}`), newTrip)
 
             toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
             window.location.reload()
@@ -57,7 +75,8 @@ export const AddPackages = () => {
             setTripsDay("");
             setRating(0);
             setPrice("");
-            setInputValues([""])
+            setGallery([""])
+            setChildrenPrice("")
             setInputValuesTripsDay([""])
 
             console.log("Trip data uploaded successfully!");
@@ -66,26 +85,6 @@ export const AddPackages = () => {
         }
     };
 
-
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-        const updatedValues = [...inputValues];
-        updatedValues[index] = e.target.value;
-        setInputValues(updatedValues);
-    };
-
-
-    const handleAddInput = () => {
-        if (inputValues.length < 5) {
-            setInputValues([...inputValues, '']);
-        }
-    };
-
-    const handleRemoveInput = (index: any) => {
-        const updatedValues = [...inputValues];
-        updatedValues.splice(index, 1);
-        setInputValues(updatedValues);
-    };
 
 
 
@@ -106,30 +105,6 @@ export const AddPackages = () => {
         setInputValuesTripsDay(updatedValues);
     };
 
-    const renderInputs = () => {
-        return inputValues.map((value, index) => (
-            <div key={index} className="field my-3 ">
-                {index > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <div></div>
-                        <Button
-                            className="p-button-danger p-button-sm p-button-text"
-                            icon="pi pi-times"
-                            onClick={() => handleRemoveInput(index)}
-                        />
-                    </div>
-                )}
-                <InputText
-                    id={`input-${index}`}
-                    type="text"
-                    placeholder='ใส่ url รูปภาพสถานที่ท่องเที่ยว'
-                    value={value}
-                    onChange={(e) => handleInputChange(e, index)}
-                />
-
-            </div>
-        ));
-    };
 
     const renderInputsTripsDay = () => {
         return inputValuesTripsDay.map((value, index) => (
@@ -173,8 +148,9 @@ export const AddPackages = () => {
                 <InputText id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div className="field">
-                <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ (URL)</label>
-                <InputText id="image" type="text" value={imageURL} onChange={(e) => setImageURL(e.target.value)} />
+                <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ <span className="text-red-500 text-sm">*เลือกรูปแล้วจะอัปโหลดอัตโนมัติ</span></label>
+                <FileUpload mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
+
             </div>
             <div className="field">
                 <label htmlFor="location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ประเทศ</label>
@@ -190,10 +166,17 @@ export const AddPackages = () => {
                 <InputTextarea id='description' rows={5} cols={30} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             <div className="field" >
-                <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มรูปภาพแนะนำ(gallery)</label>
+                <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มรูปภาพแนะนำ(gallery) <span className="text-red-500 text-sm">* 5 รูป</span> </label>
             </div>
-            <Button icon="pi pi-plus" onClick={handleAddInput} disabled={inputValues.length >= 5} />
-            {renderInputs()}
+            <FileUpload
+                name="demo[]"
+                url={'http://localhost:3001/api/upload'}
+                multiple
+                accept="image/*"
+                maxFileSize={2000000}
+                emptyTemplate={<p className="m-0">ลากและวางไฟล์ที่นี่เพื่ออัปโหลด.</p>}
+                onUpload={handleFileFireUpload}
+            />
             <div className="field">
                 <label htmlFor="tripsDay" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ทัวร์กี่วันกี่คืน</label>
                 <InputText id="tripsDay" type="text" value={tripsDay} onChange={(e) => setTripsDay(e.target.value)} />
@@ -208,8 +191,12 @@ export const AddPackages = () => {
             <Button icon="pi pi-plus" onClick={handleAddInputTripsDay} />
             {renderInputsTripsDay()}
             <div className="field">
-                <label htmlFor="price" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจ</label>
+                <label htmlFor="price" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจผู้ใหญ่</label>
                 <InputText id="price" type="text" value={price} onChange={(e) => setPrice(e.target.value)} />
+            </div>
+            <div className="field">
+                <label htmlFor="price" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจเด็ก</label>
+                <InputText id="price" type="text" value={childrenPrice} onChange={(e) => setChildrenPrice(e.target.value)} />
             </div>
 
             <div className='mt-6'>
