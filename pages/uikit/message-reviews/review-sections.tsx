@@ -30,7 +30,7 @@ export const Review = () => {
     const removeReviews = async (reviewsId: any) => {
         try {
             setLoading(true);
-            const tripRef = doc(db, 'reviews', `reviews-ID-${reviewsId}`);
+            const tripRef = doc(db, 'reviews', reviewsId);
             await deleteDoc(tripRef);
             console.log('reviews removed successfully!');
             window.location.reload();
