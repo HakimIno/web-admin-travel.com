@@ -4,7 +4,7 @@ import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
-   
+    
 }
 
 

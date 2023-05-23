@@ -52,7 +52,7 @@ export const Packages = () => {
     // Function to edit a trip
     const editTrip = async () => {
         try {
-            const tripRef = doc(db, 'trips', `trips-ID-${productId}`);
+            const tripRef = doc(db, 'trips', productId);
 
             const tripSnapshot = await getDoc(tripRef);
             const originalTrip = tripSnapshot.data();
