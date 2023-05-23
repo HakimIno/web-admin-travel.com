@@ -60,9 +60,9 @@ export const Hotels = () => {
     }, []);
 
 
-    const editTrip = async () => {
+    const editTrip = async (hotelsID: any) => {
         try {
-            const hotelsRef = doc(db, 'hotels', `hotels-ID-${hotelsID}`);
+            const hotelsRef = doc(db, 'hotels', hotelsID);
 
             const hotelsSnapshot = await getDoc(hotelsRef);
             const originalHotels = hotelsSnapshot.data();
@@ -92,8 +92,8 @@ export const Hotels = () => {
     const removeHotels = async (hotelsId: any) => {
         try {
             setLoading(true);
-            const tripRef = doc(db, 'hotels', `hotels-ID-${hotelsId}`);
-            await deleteDoc(tripRef);
+            const hotelsRef = doc(db, 'hotels', hotelsId);
+            await deleteDoc(hotelsRef);
             console.log('Trip removed successfully!');
             window.location.reload();
         } catch (error) {
@@ -150,7 +150,7 @@ export const Hotels = () => {
     const footerContent = (
         <div>
             <Button label="ยกเลิก" icon="pi pi-times" onClick={() => setVisible(false)} className="p-button-text" />
-            <Button label="ยืนยัน" icon="pi pi-check" onClick={editTrip} autoFocus />
+            <Button label="ยืนยัน" icon="pi pi-check" onClick={() => editTrip(hotelsID)} autoFocus />
         </div>
     );
 

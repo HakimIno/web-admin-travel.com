@@ -12,7 +12,7 @@ import { fetchOrdersData, fetchReviewsData, fetchUsersData } from "./api/fetch-d
 import { Orders, Reviews, Users } from "../types/interface";
 import axios from "axios";
 import { useRouter } from "next/router";
-import middleware from "./_middleware";
+
 
 
 interface MonthlySummary {
@@ -156,6 +156,11 @@ function Dashboard() {
 
     data.forEach((order) => {
       const { date, type } = order;
+
+      if(date === 'พรุ่งนี้'){
+         let date = "23 May"
+         return date
+      }
 
       const month = new Date(date).toLocaleString('en-US', { month: 'long' });
 

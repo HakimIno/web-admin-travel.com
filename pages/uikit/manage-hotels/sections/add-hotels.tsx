@@ -123,7 +123,6 @@ export const AddHotels = () => {
         ));
     };
 
-
     return (
         <div>
             <Toast ref={toast} />

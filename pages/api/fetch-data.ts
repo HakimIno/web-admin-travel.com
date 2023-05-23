@@ -8,6 +8,7 @@ export const fetchUsersData = async () => {
         const querySnapshot = await getDocs(tripsCollectionRef);
 
         const usersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
             ...doc.data()
         }));
 

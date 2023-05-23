@@ -75,7 +75,7 @@ const Notification = () => {
   const removeNotification = async (reviewsId: any) => {
     try {
 
-      const notifysRefRef = doc(db, 'notifys', `notifys-ID-${reviewsId}`);
+      const notifysRefRef = doc(db, 'notifys', reviewsId);
       await deleteDoc(notifysRefRef);
 
       toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'ลบสำเร็จ', life: 3000 });
@@ -147,10 +147,8 @@ const Notification = () => {
 
               <div className="field">
                 <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เลือกรูปที่จะแจ้งเตือน</label>
-               
+                <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" maxFileSize={1000000} onUpload={handleFileUpload} auto chooseLabel="Browse" />
               </div>
-
-
 
               <div className='mt-6'>
 

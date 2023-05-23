@@ -4,6 +4,9 @@ const nextConfig = {
   serverRuntimeConfig: {
     middleware: (req, res) => middleware.default(req, res),
   },
+  api: {
+    bodyParser: false,
+  }
 };
 
 module.exports = nextConfig;

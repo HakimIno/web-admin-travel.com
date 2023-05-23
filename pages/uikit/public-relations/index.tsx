@@ -67,7 +67,7 @@ const PublicRelations = () => {
     const removePublic_relations = async (reviewsId: any) => {
         try {
             setLoading(true);
-            const public_relationsRef = doc(db, 'public-relations', `public-relations-ID-${reviewsId}`);
+            const public_relationsRef = doc(db, 'public-relations', reviewsId);
             await deleteDoc(public_relationsRef);
             toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'ลบสำเร็จ', life: 3000 });
             window.location.reload();
