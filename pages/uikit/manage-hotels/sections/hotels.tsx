@@ -1,6 +1,6 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { db } from "../../../api/firebase";
+import { DocumentData, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, updateDoc } from "firebase/firestore";
+import { useEffect, useRef, useState } from "react";
+import { db, storage } from "../../../api/firebase";
 import { Rating } from "primereact/rating";
 import { DataView } from "primereact/dataview";
 import { Button } from "primereact/button";
@@ -9,14 +9,18 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { InputNumber } from "primereact/inputnumber";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { Toast } from "primereact/toast";
+import { FileUpload } from "primereact/fileupload";
 
 interface Hotels {
-    id: number;
+    id: string;
     title: string;
     image: string;
     gallery: string;
     location: string;
     description: string;
+    map_location: string;
     pricePeerDay: string;
     rating: number;
 }
@@ -28,20 +32,21 @@ export const Hotels = () => {
     const [hotelsID, setHotelsID] = useState('')
     const [visible, setVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const toast = useRef<any>(null);
 
-    const [title, setTitle] = useState("")
     const [imageURL, setImageURL] = useState("")
-    const [location, setLocation] = useState("")
-    const [map_location, setMap_location] = useState("")
-    const [description, setDescription] = useState("")
-    const [rating, setRating] = useState(0)
-    const [pricePeerDay, setPricePeerDay] = useState("")
+
+
     const [inputValues, setInputValues] = useState(['']);
+
+
+    const [hotel, setHotel] = useState<DocumentData | null>(null);
 
 
     useEffect(() => {
         const fetchTripsData = async () => {
             try {
+                // Fetch initial trips data
                 const tripsCollectionRef = collection(db, 'hotels');
                 const querySnapshot = await getDocs(tripsCollectionRef);
 
@@ -51,35 +56,67 @@ export const Hotels = () => {
                 }));
 
                 setHotelsData(HotelsData as unknown as Hotels[]);
+
+                // Fetch real-time updates for specific package
+                const packagesDocRef = doc(db, 'hotels', String(hotelsID));
+                const unsubscribe = onSnapshot(packagesDocRef, (documentSnapshot) => {
+                    const hotel = documentSnapshot.data();
+                    setHotel(hotel || null);
+                });
+
+                return () => {
+                    // Unsubscribe from real-time updates when component unmounts
+                    unsubscribe();
+                };
             } catch (error) {
                 console.log('Error getting trips data:', error);
             }
         };
 
         fetchTripsData();
-    }, []);
+    }, [hotelsID]);
 
 
-    const editTrip = async (hotelsID: any) => {
+    const handleFileUpload = async (event: any) => {
+        const file = event.files[0];
+        const storageRef = ref(storage, `images/poster_hotels/${Date.now()}${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURLPoster = await getDownloadURL(storageRef);
+        setImageURL(downloadURLPoster)
+        setHotel({ ...hotel, image: downloadURLPoster })
+        toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+    };
+
+    const setTitle = (text: string) => {
+        setHotel({ ...hotel, title: text });
+    };
+
+    const setLocation = (text: string) => {
+        setHotel({ ...hotel, location: text });
+    };
+
+    const setDescription = (text: string) => {
+        setHotel({ ...hotel, description: text });
+    };
+
+    const setMap_location = (text: string) => {
+        setHotel({ ...hotel, map_location: text });
+    };
+
+    const setPricePeerDay = (text: string) => {
+        setHotel({ ...hotel, pricePeerDay: text });
+    };
+
+    const setRating = (text: number) => {
+        setHotel({ ...hotel, rating: text });
+    };
+
+
+    const editTrip = async () => {
         try {
-            const hotelsRef = doc(db, 'hotels', hotelsID);
+            const tripRef = doc(db, 'hotels', hotelsID);
 
-            const hotelsSnapshot = await getDoc(hotelsRef);
-            const originalHotels = hotelsSnapshot.data();
-
-            const newHotels = {
-                ...originalHotels,
-                title: title !== "" ? title : (originalHotels?.title || ""),
-                image: imageURL !== "" ? imageURL : (originalHotels?.image || ""),
-                location: location !== "" ? location : (originalHotels?.location || ""),
-                map_location: map_location !== "" ? map_location : (originalHotels?.map_location || ""),
-                description: description !== "" ? description : (originalHotels?.description || ""),
-                rating: rating !== 0 ? rating : (originalHotels?.rating || ""),
-                pricePeerDay: pricePeerDay !== "" ? pricePeerDay : (originalHotels?.pricePeerDay || ""),
-
-            };
-
-            await updateDoc(hotelsRef, newHotels);
+            await updateDoc(tripRef, hotel);
 
             setVisible(false)
             window.location.reload();
@@ -149,8 +186,8 @@ export const Hotels = () => {
 
     const footerContent = (
         <div>
-            <Button label="ยกเลิก" icon="pi pi-times" onClick={() => setVisible(false)} className="p-button-text" />
-            <Button label="ยืนยัน" icon="pi pi-check" onClick={() => editTrip(hotelsID)} autoFocus />
+            <Button label="ยกเลิก" icon="pi pi-times" onClick={() => { setHotelsID('') ; setVisible(false)}} className="p-button-text" />
+            <Button label="ยืนยัน" icon="pi pi-check" onClick={() => editTrip()} autoFocus />
         </div>
     );
 
@@ -182,7 +219,7 @@ export const Hotels = () => {
                                     rounded
                                     outlined
                                     onClick={() => {
-                                        setHotelsID(hotels.id.toString());
+                                        setHotelsID(hotels.id);
                                         setVisible(true)
                                     }}
                                     className="p-button-rounded mr-2 "
@@ -201,43 +238,41 @@ export const Hotels = () => {
                         </div>
                     </div>
                 </div>
-                <Dialog header="แก้ไขรายละเอียดที่พัก" visible={visible} style={{ width: '30vw' }} onHide={() => setVisible(false)} footer={footerContent} >
+                
+                <Dialog header="แก้ไขรายละเอียดที่พัก" visible={visible} style={{ width: '35vw' }} onHide={() => setVisible(false)} footer={footerContent} >
                     <div className="grid" style={{ justifyContent: 'center' }}>
                         <div className="col-12">
                             <div className="card p-fluid">
                                 <div className="field">
                                     <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Title</label>
-                                    <InputText id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+                                    <InputText id="title" type="text" value={hotel?.title} onChange={(e) => setTitle(e.target.value)} />
                                 </div>
                                 <div className="field">
-                                    <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Image (URL)</label>
-                                    <InputText id="image" type="text" value={imageURL} onChange={(e) => setImageURL(e.target.value)} />
+                                    <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปโปรเตอร์</label>
+                                    <img className=" shadow-2 block xl:block mx-auto border-round" width={200} height={120} src={imageURL === '' ? hotel?.image : imageURL} alt="" />
+                                    <FileUpload style={{ marginTop: 10 }} mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} onUpload={handleFileUpload} />
                                 </div>
                                 <div className="field">
                                     <label htmlFor="location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Location</label>
-                                    <InputText id="location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
+                                    <InputText id="location" type="text" value={hotel?.location} onChange={(e) => setLocation(e.target.value)} />
                                 </div>
                                 <div className="field">
                                     <label htmlFor="description" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Description</label>
-                                    <InputTextarea id='description' rows={5} cols={30} value={description} onChange={(e) => setDescription(e.target.value)} />
+                                    <InputTextarea id='description' rows={5} cols={30} value={hotel?.description} onChange={(e) => setDescription(e.target.value)} />
                                 </div>
                                 <div className="field">
                                     <label htmlFor="map_location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>GoogleMap Url ตำแหน่งที่ตั้ง</label>
-                                    <InputText id="map_location" type="text" value={map_location} onChange={(e) => setMap_location(e.target.value)} />
+                                    <InputText id="map_location" type="text" value={hotel?.map_location} onChange={(e) => setMap_location(e.target.value)} />
                                 </div>
-                                {/* <div className="field" >
-                                    <label style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เพิ่มรูปภาพแนะนำ(gallery)</label>
-                                </div>
-                                <Button icon="pi pi-plus" onClick={handleAddInput} disabled={inputValues.length >= 5} />
-                                {renderInputs()} */}
+                               
                                 <div className="field" >
                                     <label htmlFor="rating" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Rating</label>
-                                    <InputNumber value={rating} onValueChange={(e: any) => setRating(e.value)} min={0} max={10} minFractionDigits={1} />
+                                    <InputNumber value={hotel?.rating} onValueChange={(e: any) => setRating(e.value)} min={0} max={10} minFractionDigits={1} />
                                 </div>
 
                                 <div className="field">
                                     <label htmlFor="pricePeerDay" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจ</label>
-                                    <InputText id="pricePeerDay" type="text" value={pricePeerDay} onChange={(e) => setPricePeerDay(e.target.value)} />
+                                    <InputText id="pricePeerDay" type="text" value={hotel?.pricePeerDay} onChange={(e) => setPricePeerDay(e.target.value)} />
                                 </div>
 
                             </div>
@@ -251,6 +286,7 @@ export const Hotels = () => {
 
     return (
         <div >
+            <Toast ref={toast} />
             <DataView value={hotelsData} itemTemplate={itemTemplate} />
         </div>
     )

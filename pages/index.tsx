@@ -4,15 +4,17 @@ import { Button } from "primereact/button";
 import { Chart } from "primereact/chart";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Card } from 'primereact/card';
 import { Menu } from "primereact/menu";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { fetchOrdersData, fetchReviewsData, fetchUsersData } from "./api/fetch-data";
-import { Orders, Reviews, Users } from "../types/interface";
+import { fetchOrdersData, fetchRecommendedTrips, fetchReviewsData, fetchUsersData } from "./api/fetch-data";
+import { Orders, Reviews, TripsRecommended, Users } from "../types/interface";
 import axios from "axios";
 import { useRouter } from "next/router";
-
+import { DataView } from "primereact/dataview";
+import { Carousel, CarouselResponsiveOption } from 'primereact/carousel';
 
 
 interface MonthlySummary {
@@ -29,10 +31,28 @@ function Dashboard() {
   const [users, setUsers] = useState<Users[]>([])
   const [orders, setOrders] = useState<Orders[]>([])
   const [review, setReview] = useState<Reviews[]>([])
+  const [tripsRecommended, setTripsRecommended] = useState<TripsRecommended[]>([])
   const [monthlySummary, setMonthlySummary] = useState<{ [month: string]: MonthlySummary }>({});
-  const router = useRouter();
 
-  
+  const responsiveOptions: CarouselResponsiveOption[] = [
+    {
+      breakpoint: '1199px',
+      numVisible: 1,
+      numScroll: 1
+    },
+    {
+      breakpoint: '991px',
+      numVisible: 2,
+      numScroll: 1
+    },
+    {
+      breakpoint: '767px',
+      numVisible: 1,
+      numScroll: 1
+    }
+  ];
+
+
 
   useEffect(() => {
     const documentStyle = getComputedStyle(document.documentElement);
@@ -132,6 +152,8 @@ function Dashboard() {
       try {
         const userData = await fetchUsersData();
         const ordersData = await fetchOrdersData();
+
+        const tripRecommended = await fetchRecommendedTrips();
         const reviewsData = await fetchReviewsData();
         const summarizedData = summarizeDataByMonth(ordersData as unknown as Orders[]);
 
@@ -142,6 +164,8 @@ function Dashboard() {
         setUsers(userData as unknown as Users[]);
 
         setReview(reviewsData as unknown as Reviews[])
+
+        setTripsRecommended(tripRecommended as unknown as TripsRecommended[])
       } catch (error) {
         console.log('Error:', error);
       }
@@ -157,9 +181,9 @@ function Dashboard() {
     data.forEach((order) => {
       const { date, type } = order;
 
-      if(date === 'พรุ่งนี้'){
-         let date = "23 May"
-         return date
+      if (date === 'พรุ่งนี้') {
+        let date = "23 May"
+        return date
       }
 
       const month = new Date(date).toLocaleString('en-US', { month: 'long' });
@@ -179,6 +203,21 @@ function Dashboard() {
     });
 
     return summarizedData;
+  };
+
+  const itemTemplate = (product: TripsRecommended) => {
+    return (
+      <div className=" m-2 ">
+        <div className="mb-3">
+          <img src={product.image} alt={product.title} className=" shadow-2" height={150} width={250} style={{ borderRadius: 10 }} />
+        </div>
+        <div>
+          <div className="text-900 font-medium text-xl">{product.title}</div>
+          <h6 className="mt-0 mb-3">ราคา ${product.price}</h6>
+
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -232,6 +271,15 @@ function Dashboard() {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <div className="col-12">
+        <div className="card ">
+       <div className="text-900 font-bold text-xl">แพ็คเกจทัวร์ขายดี</div>
+         
+            <Carousel value={tripsRecommended} numVisible={3} className="mt-3" numScroll={3} responsiveOptions={responsiveOptions} itemTemplate={itemTemplate} />
+         
         </div>
       </div>
 
@@ -318,9 +366,7 @@ function Dashboard() {
 
       </div>
       <div className="col-12 mt-6">
-        <div className="card">
-          <Chart type="bar" data={chartData} options={chartOptions} />
-        </div>
+        
       </div>
     </div>
   );

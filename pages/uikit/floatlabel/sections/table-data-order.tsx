@@ -106,6 +106,8 @@ export const TableDataOrder = () => {
                         </div>}>
 
                 </Column>
+                <Column field="note" header="หมายเหตุ" style={{ minWidth: '12rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-12rem">{rowData.note}</div>} ></Column>
+               
                 <Column
                     field="status"
                     header="#"

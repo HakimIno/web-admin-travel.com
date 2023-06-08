@@ -1,4 +1,4 @@
-import { DocumentData, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { DocumentData, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, updateDoc } from "firebase/firestore";
 import { Column } from "primereact/column"
 import { DataTable } from "primereact/datatable"
 import { useEffect, useRef, useState } from "react"
@@ -16,13 +16,22 @@ import { InputText } from "primereact/inputtext";
 export const TableUser = () => {
     const [users, setUsers] = useState<Users[]>([])
     const [loading, setLoading] = useState(false);
+    const [userData, setUserData] = useState<DocumentData | null>(null);
     const toast = useRef<any>(null);
+    const [userId, setUserId] = useState('')
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const userData = await fetchUsersData();
-                setUsers(userData as unknown as Users[]);
+                const user = await fetchUsersData();
+                setUsers(user as unknown as Users[]);
+
+                const userDocRef = doc(db, 'users', String(userId));
+                const documentSnapshot = await getDoc(userDocRef);
+
+                const userDataD = documentSnapshot.data();
+                setUserData(userDataD || null);
+
             } catch (error) {
                 console.log('Error:', error);
             }
@@ -30,11 +39,13 @@ export const TableUser = () => {
 
         fetchData();
 
-    }, []);
+    }, [userId]);
+
+ 
 
     const [visible, setVisible] = useState(false);
 
-    const [userId, setUserId] = useState('')
+
 
 
     const noneProfile = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Firisvision.com%2Fwp-content%2Fuploads%2F2019%2F01%2Fno-profile-1-1200x1200.png&f=1&nofb=1&ipt=95197b1aa84b770971834137a81070d957678eca65716165a0d1527f3472ba22&ipo=images"
@@ -55,35 +66,21 @@ export const TableUser = () => {
     };
 
 
-    const [firstName, setFirstName] = useState('')
-    const [lastName, setLastName] = useState('')
-    const [email, setEmail] = useState('')
-    const [phoneNumber, setPhoneNumber] = useState('')
-
-
-    const editTrip = async () => {
+    const editUsers = async () => {
         try {
-            const userRef = doc(db, 'users', userId);
 
-            const userSnapshot = await getDoc(userRef);
-            const original = userSnapshot.data();
-
-            const newUser = {
-                ...original,
-                firstName: firstName !== "" ? firstName : (original?.firstName || ""),
-                lastName: lastName !== "" ? lastName : (original?.lastName || ""),
-                email: email !== "" ? email : (original?.email || ""),
-                phoneNumber: phoneNumber !== "" ? phoneNumber : (original?.phoneNumber || ""),
+            const usersCollectionRef = collection(db, 'users');
+            const userDocRef = doc(usersCollectionRef, userId);
 
 
-            };
-
-            await updateDoc(userRef, newUser);
+            await updateDoc(userDocRef, userData);
 
             setVisible(false)
             window.location.reload();
+
+            console.log('Profile updated successfully!');
         } catch (error) {
-            console.log('Error editing trip:', error);
+            console.error('Error updating profile:', error);
         }
     };
 
@@ -91,10 +88,26 @@ export const TableUser = () => {
 
     const footerContent = (
         <div>
-            <Button label="ยกเลิก" icon="pi pi-times" onClick={() => setVisible(false)} className="p-button-text" />
-            <Button label="ยืนยัน" icon="pi pi-check" onClick={editTrip} autoFocus />
+            <Button label="ยกเลิก" icon="pi pi-times" onClick={() => { setUserId(''); setVisible(false) }} className="p-button-text" />
+            <Button label="ยืนยัน" icon="pi pi-check" onClick={editUsers} autoFocus />
         </div>
     );
+
+    const setFirstName = (text: string) => {
+        setUserData({ ...userData, firstName: text });
+    };
+
+    const setLastName = (text: string) => {
+        setUserData({ ...userData, lastName: text });
+    };
+
+    const setEmail = (text: string) => {
+        setUserData({ ...userData, email: text });
+    };
+
+    const setPhoneNumber = (text: string) => {
+        setUserData({ ...userData, phoneNumber: text });
+    };
 
 
     return (
@@ -118,7 +131,7 @@ export const TableUser = () => {
                             severity="warning"
                             className="p-button-rounded"
                             onClick={(e) => {
-                                setUserId(row.id)
+                                setUserId(row.id);
                                 setVisible(true)
                             }}
                         >
@@ -145,25 +158,26 @@ export const TableUser = () => {
                 </Column>
             </DataTable>
 
-            <Dialog header="แก้ไขผู้ใช้" visible={visible} style={{ width: '30vw' }} onHide={() => setVisible(false)} footer={footerContent} >
+            <Dialog header="แก้ไขผู้ใช้" visible={visible} style={{ width: '30vw' }} onHide={() => { setUserId(''); setVisible(false) }} footer={footerContent} >
                 <div className="grid" style={{ justifyContent: 'center' }}>
                     <div className="col-12">
                         <div className="card p-fluid">
+                            
                             <div className="field">
                                 <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ชื่อ</label>
-                                <InputText id="title" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                                <InputText id="title" type="text" value={userData?.firstName} onChange={(e) => setFirstName(e.target.value)} />
                             </div>
                             <div className="field">
                                 <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>นามสกุล</label>
-                                <InputText id="image" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                                <InputText id="image" type="text" value={userData?.lastName} onChange={(e) => setLastName(e.target.value)} />
                             </div>
                             <div className="field">
                                 <label htmlFor="location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>อีเมล</label>
-                                <InputText id="location" type="text" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                <InputText id="location" type="text" value={userData?.email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
                             <div className="field">
                                 <label htmlFor="map_location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>เบอร์โทรศัพท์</label>
-                                <InputText id="map_location" type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                                <InputText id="map_location" type="text" value={userData?.phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
                             </div>
 
                         </div>

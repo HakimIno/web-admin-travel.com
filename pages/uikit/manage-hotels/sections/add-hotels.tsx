@@ -151,10 +151,6 @@ export const AddHotels = () => {
                 <label htmlFor="tripsDay" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคา</label>
                 <InputText id="tripsDay" type="text" value={pricePeerDay} onChange={(e) => setPricePeerDay(e.target.value)} />
             </div>
-            <div className="field">
-                <label htmlFor="tripsDay" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>IDทัวร์</label>
-                <InputText id="tripsDay" type="text" value={tripsId} onChange={(e) => setTripsId(e.target.value)} />
-            </div>
 
             <div className="field" >
                 <label htmlFor="rating" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Rating</label>

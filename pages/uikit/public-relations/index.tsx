@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
+import { DocumentData, addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from 'firebase/firestore'
 import { Button } from 'primereact/button'
 import { InputText } from 'primereact/inputtext'
 import { TabPanel, TabView } from 'primereact/tabview'
@@ -9,6 +9,8 @@ import { fetchPublic_RelationsData } from '../../api/fetch-data'
 import { DataView } from 'primereact/dataview'
 import { FileUpload } from 'primereact/fileupload'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { Dialog } from 'primereact/dialog'
+import { InputTextarea } from 'primereact/inputtextarea'
 
 interface Publics {
     id: number,
@@ -21,8 +23,12 @@ const PublicRelations = () => {
     const [description, setDescription] = useState('')
     const [loading, setLoading] = useState(false);
     const toast = useRef<any>(null);
+    const [visible, setVisible] = useState(false);
 
     const [public_relations, setPublic_relations] = useState<Publics[]>([])
+
+    const [publicRelations, setPublicRelations] = useState<DocumentData | null>(null);
+    const [publicRelationsId, setPublicRelationsId] = useState('');
 
     const handleFileUpload = async (event: any) => {
         const file = event.files[0];
@@ -50,6 +56,17 @@ const PublicRelations = () => {
         setUrlImagePromo("")
     }
 
+    const handleFileUploadUpdate = async (event: any) => {
+        const file = event.files[0];
+        const storageRef = ref(storage, `images/notification/${Date.now()}${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURLPoster = await getDownloadURL(storageRef);
+        setUrlImagePromo(downloadURLPoster)
+        setPublicRelations({ ...publicRelations, image: downloadURLPoster })
+        toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+    };
+
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -57,17 +74,54 @@ const PublicRelations = () => {
                 const public_relation = await fetchPublic_RelationsData();
 
                 setPublic_relations(public_relation as unknown as Publics[])
+
+                const publicRelationDocRef = doc(db, 'public-relations', String(publicRelationsId));
+                const unsubscribe = onSnapshot(publicRelationDocRef, (documentSnapshot) => {
+                    const publicRelation = documentSnapshot.data();
+                    setPublicRelations(publicRelation || null);
+                });
+
+                return () => {
+                    // Unsubscribe from real-time updates when component unmounts
+                    unsubscribe();
+                };
             } catch (error) {
                 console.log(error)
             }
         }
         fetchData()
-    }, []);
+    }, [publicRelationsId]);
 
-    const removePublic_relations = async (reviewsId: any) => {
+    const setTitleUpdate = (text: string) => {
+        setPublicRelations({ ...publicRelations, title: text });
+    };
+
+
+    const setDescriptionUpdate = (text: string) => {
+        setPublicRelations({ ...publicRelations, description: text });
+    };
+
+    console.log(publicRelations)
+
+
+    const editPublicRelations = async () => {
+        try {
+            const notifysRef = doc(db, 'public-relations', publicRelationsId);
+
+            await updateDoc(notifysRef, publicRelations);
+
+            setVisible(false)
+            window.location.reload();
+        } catch (error) {
+            console.log('Error editing notifys:', error);
+        }
+    };
+
+
+    const removePublic_relations = async (public_relationsId: any) => {
         try {
             setLoading(true);
-            const public_relationsRef = doc(db, 'public-relations', reviewsId);
+            const public_relationsRef = doc(db, 'public-relations', public_relationsId);
             await deleteDoc(public_relationsRef);
             toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'ลบสำเร็จ', life: 3000 });
             window.location.reload();
@@ -77,6 +131,14 @@ const PublicRelations = () => {
             setLoading(false);
         }
     };
+
+    const footerContent = (
+        <div>
+            <Button label="ยกเลิก" icon="pi pi-times" onClick={() => { setVisible(false); }} className="p-button-text" />
+            <Button label="ยืนยัน" icon="pi pi-check" onClick={editPublicRelations} autoFocus />
+        </div>
+    );
+
 
     const itemTemplate = (item: any) => {
         return (
@@ -92,16 +154,56 @@ const PublicRelations = () => {
                         <div style={{ fontWeight: 'bold', fontSize: 16, }}>รายละเอียด:</div>
                         <div className="line-clamp-2 w-12rem">{item.description}</div>
                     </div>
-                    <Button
-                        icon="pi pi-trash"
-                        rounded
-                        outlined
-                        severity="danger"
-                        className="p-button-rounded"
-                        onClick={(e) => { e.preventDefault(); removePublic_relations(item.id); }}
-                    >
 
-                    </Button>
+                    <div>
+                        <Button
+                            icon="pi pi-file-edit"
+                            rounded
+                            outlined
+                            className="p-button-rounded mr-2"
+                            onClick={() => {
+                                setPublicRelationsId(item.id);
+                                setVisible(true)
+                            }}
+                        >
+
+                        </Button>
+                        <Button
+                            icon="pi pi-trash"
+                            rounded
+                            outlined
+                            severity="danger"
+                            className="p-button-rounded"
+                            onClick={(e) => { e.preventDefault(); removePublic_relations(item.id); }}
+                        >
+
+                        </Button>
+                    </div>
+
+                    <Dialog header="แก้ไขโปรโมชั่น" visible={visible} style={{ width: '35vw' }} onHide={() => setVisible(false)} footer={footerContent} >
+                        <div className="grid" style={{ justifyContent: 'center' }}>
+                            <div className="col-12">
+                                <div className="card p-fluid">
+                                    <div className="field">
+                                        <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Title</label>
+                                        <InputText id="title" type="text" value={publicRelations?.title} onChange={(e) => setTitleUpdate(e.target.value)} />
+                                    </div>
+
+                                    <div className="field">
+                                        <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปโปรเตอร์</label>
+                                        <img className=" shadow-2 block xl:block mx-auto border-round" width={200} height={120} src={urlImagePromo === '' ? publicRelations?.image : urlImagePromo} alt="" />
+                                        <FileUpload style={{ marginTop: 10 }} mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} onUpload={handleFileUploadUpdate} />
+
+                                    </div>
+
+                                    <div className="field">
+                                        <label htmlFor="description" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Description</label>
+                                        <InputTextarea id='description' rows={5} cols={30} value={publicRelations?.description} onChange={(e) => setDescriptionUpdate(e.target.value)} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Dialog>
                 </div>
             </div>
         );

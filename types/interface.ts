@@ -32,3 +32,10 @@ export interface Reviews {
     rating: string,
     tripsId: string
 }
+
+export interface TripsRecommended {
+    id: number;
+    title: string;
+    image: string;
+    price: string;
+}

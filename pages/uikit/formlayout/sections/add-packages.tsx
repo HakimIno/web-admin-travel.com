@@ -24,6 +24,11 @@ export const AddPackages = () => {
     const [gallery, setGallery] = useState<string[]>([]);
     const [inputValuesTripsDay, setInputValuesTripsDay] = useState(['']);
 
+    const [hotelsName, setHotelsName] = useState("")
+    const [singleBadPrice, setSingleBadPrice] = useState("")
+    const [doubleBedPrice, setDoubleBedPrice] = useState("")
+    const [threeBedsPrice, setThreeBedsPrice] = useState("")
+
 
     const handleFileUpload = async (event: any) => {
         const file = event.files[0];
@@ -58,6 +63,10 @@ export const AddPackages = () => {
                 detailsTripsDay: inputValuesTripsDay,
                 price: price,
                 childrenPrice: childrenPrice,
+                hotelsName: hotelsName,
+                singleBadPrice: singleBadPrice,
+                doubleBedPrice: doubleBedPrice,
+                threeBedsPrice: threeBedsPrice,
                 type: "PLACE"
             };
 
@@ -149,7 +158,7 @@ export const AddPackages = () => {
             </div>
             <div className="field">
                 <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ <span className="text-red-500 text-sm">*เลือกรูปแล้วจะอัปโหลดอัตโนมัติ</span></label>
-                <FileUpload mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
+                <FileUpload  mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
 
             </div>
             <div className="field">
@@ -195,8 +204,24 @@ export const AddPackages = () => {
                 <InputText id="price" type="text" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="field">
-                <label htmlFor="price" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจเด็ก</label>
-                <InputText id="price" type="text" value={childrenPrice} onChange={(e) => setChildrenPrice(e.target.value)} />
+                <label htmlFor="childrenPrice" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาแพ็คเกจเด็ก</label>
+                <InputText id="childrenPrice" type="text" value={childrenPrice} onChange={(e) => setChildrenPrice(e.target.value)} />
+            </div>
+            <div className="field">
+                <label htmlFor="hotelsName" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ชื่อโรงแรม/ที่พัก</label>
+                <InputText id="hotelsName" type="text" value={hotelsName} onChange={(e) => setHotelsName(e.target.value)} />
+            </div>
+            <div className="field">
+                <label htmlFor="singleBadPrice" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาเตียงเดี่ยว</label>
+                <InputText id="singleBadPrice" type="text" value={singleBadPrice} onChange={(e) => setSingleBadPrice(e.target.value)} />
+            </div>
+            <div className="field">
+                <label htmlFor="doubleBedPrice" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาเตียงคู่</label>
+                <InputText id="doubleBedPrice" type="text" value={doubleBedPrice} onChange={(e) => setDoubleBedPrice(e.target.value)} />
+            </div>
+            <div className="field">
+                <label htmlFor="threeBedsPrice" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ราคาเตียงสาม</label>
+                <InputText id="threeBedsPrice" type="text" value={threeBedsPrice} onChange={(e) => setThreeBedsPrice(e.target.value)} />
             </div>
 
             <div className='mt-6'>

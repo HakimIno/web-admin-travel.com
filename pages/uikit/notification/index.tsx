@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { DocumentData, addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { TabPanel, TabView } from 'primereact/tabview';
@@ -10,6 +10,8 @@ import { DataView } from 'primereact/dataview';
 import moment from 'moment';
 import { FileUpload } from 'primereact/fileupload';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { Dialog } from 'primereact/dialog';
+import { InputTextarea } from 'primereact/inputtextarea';
 
 interface Notifys {
   id: number;
@@ -24,8 +26,12 @@ const Notification = () => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [imageURL, setImageURL] = useState("")
+  const [visible, setVisible] = useState(false);
 
   const [notification, setNotification] = useState<Notifys[]>([])
+
+  const [notifys, setNotifys] = useState<DocumentData | null>(null);
+  const [notifysId, setNotifysId] = useState('');
 
   const handleFileUpload = async (event: any) => {
     const file = event.files[0];
@@ -33,6 +39,16 @@ const Notification = () => {
     await uploadBytes(storageRef, file);
     const downloadURLPoster = await getDownloadURL(storageRef);
     setImageURL(downloadURLPoster)
+    toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
+  };
+
+  const handleFileUploadUpdate = async (event: any) => {
+    const file = event.files[0];
+    const storageRef = ref(storage, `images/notification/${Date.now()}${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURLPoster = await getDownloadURL(storageRef);
+    setImageURL(downloadURLPoster)
+    setNotifys({ ...notifys, image: downloadURLPoster })
     toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
   };
 
@@ -65,12 +81,23 @@ const Notification = () => {
         const notifys = await fetchNotificationData();
 
         setNotification(notifys as unknown as Notifys[])
+
+        const packagesDocRef = doc(db, 'notifys', String(notifysId));
+        const unsubscribe = onSnapshot(packagesDocRef, (documentSnapshot) => {
+          const notify = documentSnapshot.data();
+          setNotifys(notify || null);
+        });
+
+        return () => {
+          // Unsubscribe from real-time updates when component unmounts
+          unsubscribe();
+        };
       } catch (error) {
         console.log(error)
       }
     }
     fetchData()
-  }, []);
+  }, [notifysId]);
 
   const removeNotification = async (reviewsId: any) => {
     try {
@@ -86,6 +113,39 @@ const Notification = () => {
     }
   };
 
+  const setTitleUpdate = (text: string) => {
+    setNotifys({ ...notifys, title: text });
+  };
+
+
+  const setDescriptionUpdate = (text: string) => {
+    setNotifys({ ...notifys, description: text });
+  };
+
+
+  const editNotification = async () => {
+    try {
+      const notifysRef = doc(db, 'notifys', notifysId);
+
+      await updateDoc(notifysRef, notifys);
+
+      setVisible(false)
+      window.location.reload();
+    } catch (error) {
+      console.log('Error editing notifys:', error);
+    }
+  };
+
+
+  const footerContent = (
+    <div>
+      <Button label="ยกเลิก" icon="pi pi-times" onClick={() => { setVisible(false); }} className="p-button-text" />
+      <Button label="ยืนยัน" icon="pi pi-check" onClick={editNotification} autoFocus />
+    </div>
+  );
+
+
+
   const itemTemplate = (item: any) => {
     return (
       <div className="col-12">
@@ -93,7 +153,7 @@ const Notification = () => {
           <div >
             <div style={{ fontWeight: 'bold', fontSize: 16, }}>Title:</div>
             <div className="line-clamp-2 w-12rem">
-              <img src={item.image} style={{ width: 150, height: 75}} alt='' />
+              <img src={item.image} style={{ width: 150, height: 75 }} alt='' />
             </div>
           </div>
           <div >
@@ -109,16 +169,54 @@ const Notification = () => {
             <div className="line-clamp-2 w-12rem">{item.date}</div>
           </div>
 
-          <Button
-            icon="pi pi-trash"
-            rounded
-            outlined
-            severity="danger"
-            className="p-button-rounded"
-            onClick={(e) => { e.preventDefault(); removeNotification(item.id); }}
-          >
+          <div>
+            <Button
+              icon="pi pi-file-edit"
+              rounded
+              outlined
+              className="p-button-rounded mr-2"
+              onClick={() => {
+                setNotifysId(item.id);
+                setVisible(true)
+              }}>
 
-          </Button>
+            </Button>
+            <Button
+              icon="pi pi-trash"
+              rounded
+              outlined
+              severity="danger"
+              className="p-button-rounded"
+              onClick={(e) => { e.preventDefault(); removeNotification(item.id); }}
+            >
+
+            </Button>
+          </div>
+
+          <Dialog header="แก้ไขแจ้งเตือน" visible={visible} style={{ width: '35vw' }} onHide={() => setVisible(false)} footer={footerContent} >
+            <div className="grid" style={{ justifyContent: 'center' }}>
+              <div className="col-12">
+                <div className="card p-fluid">
+                  <div className="field">
+                    <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Title</label>
+                    <InputText id="title" type="text" value={notifys?.title} onChange={(e) => setTitleUpdate(e.target.value)} />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปโปรเตอร์</label>
+                    <img className=" shadow-2 block xl:block mx-auto border-round" width={200} height={120} src={imageURL === '' ? notifys?.image : imageURL} alt="" />
+                    <FileUpload style={{ marginTop: 10 }} mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} onUpload={handleFileUploadUpdate} />
+
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="description" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>Description</label>
+                    <InputTextarea id='description' rows={5} cols={30} value={notifys?.description} onChange={(e) => setDescriptionUpdate(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Dialog>
         </div>
       </div>
     );
