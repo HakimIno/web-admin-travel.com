@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 
 
@@ -37,7 +37,7 @@ export const fetchOrdersData = async () => {
 export const fetchOrdersPlaceData = async () => {
     try {
         const ordersCollectionRef = collection(db, 'orders');
-        const q = query(ordersCollectionRef, where('type', '==' ,'PLACE'));
+        const q = query(ordersCollectionRef, where('type', '==', 'PLACE'), where('status', '==', 'InProgress'));
         const querySnapshot = await getDocs(q);
 
         const ordersData = querySnapshot.docs.map((doc) => ({
@@ -51,10 +51,79 @@ export const fetchOrdersPlaceData = async () => {
     }
 };
 
+export const fetchOrdersPlaceDataSuccess = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==', 'PLACE'), where('status', '==', 'Success'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
+export const fetchOrdersPlaceDataFailed = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==', 'PLACE'), where('status', '==', 'Failed'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
+
 export const fetchOrdersHotelsData = async () => {
     try {
         const ordersCollectionRef = collection(db, 'orders');
-        const q = query(ordersCollectionRef, where('type', '==' ,'HOTELS'));
+        const q = query(ordersCollectionRef, where('type', '==', 'HOTELS'), where('status', '==', 'InProgress'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
+export const fetchOrdersHotelsDataSuccess = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==', 'HOTELS'), where('status', '==', 'Success'));
+        const querySnapshot = await getDocs(q);
+
+        const ordersData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return ordersData;
+    } catch (error) {
+        console.log('Error getting users data:', error);
+    }
+};
+
+export const fetchOrdersHotelsDataFailed = async () => {
+    try {
+        const ordersCollectionRef = collection(db, 'orders');
+        const q = query(ordersCollectionRef, where('type', '==', 'HOTELS'), where('status', '==', 'Failed'));
         const querySnapshot = await getDocs(q);
 
         const ordersData = querySnapshot.docs.map((doc) => ({
@@ -121,7 +190,7 @@ export const fetchNotificationData = async () => {
 export const fetchNotificationAdmin = async () => {
     try {
         const notificationCollectionRef = collection(db, 'notification');
-        const querySnapshot = await getDocs(notificationCollectionRef);
+        const querySnapshot = await getDocs(query(notificationCollectionRef, orderBy('date', 'desc'), limit(5)));
 
         const notification = querySnapshot.docs.map((doc) => ({
             id: doc.id,
@@ -137,45 +206,45 @@ export const fetchNotificationAdmin = async () => {
 
 export const fetchRecommendedTrips = async () => {
     try {
-      const tripsCollectionRef = collection(db, 'trips');
-      const querySnapshot = await getDocs(tripsCollectionRef);
-  
-      const trips = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-  
-      const ordersCollectionRef = collection(db, 'orders');
-      const querySnapshotOrder = await getDocs(ordersCollectionRef);
-  
-      // Count the number of orders for each trip
-      const tripOrdersCount: { [key: string]: number } = {};
-      querySnapshotOrder.forEach((doc) => {
-        const tripId = doc.data().tripsId;
-        tripOrdersCount[tripId] = (tripOrdersCount[tripId] || 0) + 1;
-      });
-  
-      const sortedTrips = trips.sort((a, b) => {
-        const ordersA = tripOrdersCount[a.id] || 0;
-        const ordersB = tripOrdersCount[b.id] || 0;
-      
-        
-        if (ordersA > ordersB) {
-          return -1;
-        } else if (ordersA < ordersB) {
-          return 1;
-        } else {
-          
-          return a.id.localeCompare(b.id);
-        }
-      })
+        const tripsCollectionRef = collection(db, 'trips');
+        const querySnapshot = await getDocs(tripsCollectionRef);
 
-      const recommendedTrips = sortedTrips.slice(0, 5);
-  
-      return recommendedTrips;
-  
+        const trips = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        const ordersCollectionRef = collection(db, 'orders');
+        const querySnapshotOrder = await getDocs(ordersCollectionRef);
+
+        // Count the number of orders for each trip
+        const tripOrdersCount: { [key: string]: number } = {};
+        querySnapshotOrder.forEach((doc) => {
+            const tripId = doc.data().tripsId;
+            tripOrdersCount[tripId] = (tripOrdersCount[tripId] || 0) + 1;
+        });
+
+        const sortedTrips = trips.sort((a, b) => {
+            const ordersA = tripOrdersCount[a.id] || 0;
+            const ordersB = tripOrdersCount[b.id] || 0;
+
+
+            if (ordersA > ordersB) {
+                return -1;
+            } else if (ordersA < ordersB) {
+                return 1;
+            } else {
+
+                return a.id.localeCompare(b.id);
+            }
+        })
+
+        const recommendedTrips = sortedTrips.slice(0, 5);
+
+        return recommendedTrips;
+
     } catch (error) {
-      console.log('Error getting trips data:', error);
-      return [];
+        console.log('Error getting trips data:', error);
+        return [];
     }
-  };
+};

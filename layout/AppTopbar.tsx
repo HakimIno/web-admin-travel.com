@@ -54,7 +54,19 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             }
         }
         fetchData()
-    });
+    },[]);
+
+    const handleButtonClick = async () => {
+        try {
+          const notifys = await fetchNotificationAdmin();
+          setNotification(notifys  as unknown as Notifys[] );
+        } catch (error) {
+          console.log(error);
+        }
+        setNotification([]);
+        setVisible(false)
+      };
+      
 
     return (
         <div className="layout-topbar">
@@ -89,7 +101,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
 
                 </button>
 
-                <Dialog header="แจ้งเตือน" visible={visible} position="top-right" style={{ width: '30vw' }} onHide={() => setVisible(false)} draggable={false} resizable={false}>
+                <Dialog header="แจ้งเตือน" visible={visible} position="top-right" style={{ width: '30vw' }} onHide={handleButtonClick} draggable={false} resizable={false}>
                     <>
                         {notification && notification.length > 0 ? (
                             notification.map((item) => (

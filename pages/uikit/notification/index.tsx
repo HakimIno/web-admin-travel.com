@@ -12,6 +12,7 @@ import { FileUpload } from 'primereact/fileupload';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { Dialog } from 'primereact/dialog';
 import { InputTextarea } from 'primereact/inputtextarea';
+import axios from 'axios';
 
 interface Notifys {
   id: number;
@@ -68,11 +69,37 @@ const Notification = () => {
 
     //await setDoc(doc(db, "notifys", `notifys-ID-${notifysData.length + 1}`), notifys)
 
+    await sendNotification()
+
     toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
     window.location.reload()
     setTitle("")
     setDescription("")
     setImageURL('')
+  }
+
+  const sendNotification = () => {
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getMonth() + 1}-${currentDate.getDate()}-${currentDate.getFullYear()} ${currentDate.getHours()}:${currentDate.getMinutes()}${currentDate.getHours() < 12 ? 'AM' : 'PM'}`;
+
+    const requestBody = {
+      appId: 8562,
+      appToken: "c50yB7EcbMr6VOtSVF0qNb",
+      title: title,
+      body: description,
+      dateSent: formattedDate,
+      bigPictureURL: imageURL || ''
+    };
+
+    axios.post('https://app.nativenotify.com/api/notification', requestBody)
+      .then(response => {
+        console.log('Notification sent successfully:', response.data);
+        // Handle the response or perform any necessary actions
+      })
+      .catch(error => {
+        console.error('Error sending notification:', error);
+        // Handle the error gracefully
+      });
   }
 
   useEffect(() => {
@@ -135,6 +162,8 @@ const Notification = () => {
       console.log('Error editing notifys:', error);
     }
   };
+
+
 
 
   const footerContent = (

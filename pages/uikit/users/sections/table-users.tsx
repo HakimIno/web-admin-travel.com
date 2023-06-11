@@ -116,7 +116,7 @@ export const TableUser = () => {
 
             <DataTable value={users}>
                 <Column field="id" header="UserID"></Column>
-                <Column field="profileUrl" header="รูปโปรไฟล์" body={(row) => <Image src={row.profileUrl ? row.profileUrl : noneProfile} alt="" width="60" />}></Column>
+                <Column field="profileUrl" header="รูปโปรไฟล์" body={(row) => <img src={row.profileUrl ? row.profileUrl : noneProfile} alt="" width="60" style={{ borderRadius: 8}} />}></Column>
                 <Column field="firstName" header="ชื่อ"></Column>
                 <Column field="lastName" header="นามสกุล"></Column>
                 <Column field="phoneNumber" header="เบอร์โทรศัพทร์"></Column>
