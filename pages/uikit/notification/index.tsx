@@ -69,8 +69,6 @@ const Notification = () => {
 
     //await setDoc(doc(db, "notifys", `notifys-ID-${notifysData.length + 1}`), notifys)
 
-    await sendNotification()
-
     toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดสำเร็จ', life: 3000 });
     window.location.reload()
     setTitle("")
@@ -88,17 +86,15 @@ const Notification = () => {
       title: title,
       body: description,
       dateSent: formattedDate,
-      bigPictureURL: imageURL || ''
+      bigPictureURL: imageURL
     };
 
     axios.post('https://app.nativenotify.com/api/notification', requestBody)
       .then(response => {
         console.log('Notification sent successfully:', response.data);
-        // Handle the response or perform any necessary actions
       })
       .catch(error => {
         console.error('Error sending notification:', error);
-        // Handle the error gracefully
       });
   }
 
@@ -299,12 +295,19 @@ const Notification = () => {
               </div>
 
               <div className='mt-6'>
+              <Button
+                  label="SendDevice"
+                  icon="pi pi-upload"
+                  iconPos="left"
+                  className='w-10rem'
+                  onClick={sendNotification}
+                />
 
                 <Button
                   label="Upload"
                   icon="pi pi-upload"
                   iconPos="left"
-                  className='w-10rem'
+                  className='w-10rem mx-3'
                   onClick={handelUpload}
                 />
               </div>

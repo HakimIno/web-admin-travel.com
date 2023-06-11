@@ -7,6 +7,7 @@ import { db } from '../../../api/firebase';
 import { Image } from 'primereact/image';
 import { Tag } from 'primereact/tag';
 import { Orders } from '../../../../types/interface';
+import axios from 'axios';
 
 const TableOrder: React.FC<{
     orders: any
@@ -18,6 +19,9 @@ const TableOrder: React.FC<{
             setLoading(true);
             const orderRef = doc(db, 'orders', orderId);
             await updateDoc(orderRef, { status: "Failed" });
+
+            await sendNotification()
+
             console.log('Trip removed successfully!');
             window.location.reload();
         } catch (error) {
@@ -51,6 +55,31 @@ const TableOrder: React.FC<{
             console.log('Error trip:', error);
         }
     }
+
+    const sendNotification = () => {
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getMonth() + 1}-${currentDate.getDate()}-${currentDate.getFullYear()} ${currentDate.getHours()}:${currentDate.getMinutes()}${currentDate.getHours() < 12 ? 'AM' : 'PM'}`;
+
+        const requestBody = {
+            appId: 8562,
+            appToken: "c50yB7EcbMr6VOtSVF0qNb",
+            title: "Aumanan Junket",
+            body: "ยกเลิกสำเร็จ",
+            dateSent: formattedDate,
+            bigPictureURL: 'image url cancel'
+        };
+
+        axios.post('https://app.nativenotify.com/api/notification', requestBody)
+            .then(response => {
+                console.log('Notification sent successfully:', response.data);
+                // Handle the response or perform any necessary actions
+            })
+            .catch(error => {
+                console.error('Error sending notification:', error);
+                // Handle the error gracefully
+            });
+    }
+
     return (
         <>
             <DataTable value={orders} tableStyle={{ minWidth: '100%' }} showGridlines dataKey="id"  >
@@ -125,7 +154,8 @@ const TableOrder: React.FC<{
                                     icon="pi pi-trash"
                                     severity="danger"
                                     rounded
-                                    onClick={(e) => { e.preventDefault; DeleteOrder(rowData.id) }} />
+                                    onClick={(e) => { e.preventDefault; DeleteOrder(rowData.id) }}
+                                />
                             }
                         </div>
                     )

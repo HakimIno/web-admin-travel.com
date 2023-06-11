@@ -69,6 +69,7 @@ export const Packages = () => {
         setPackages({ ...packages, image: downloadURLPoster })
         toast.current.show({ severity: 'success', summary: 'สำเร็จ', detail: 'อัปโหลดรูปสำเร็จ', life: 3000 });
     };
+
     const handleFileFireUpload = async (event: any) => {
         const files = event.files;
         const updatedGallery = [...packages?.gallery];
@@ -163,11 +164,14 @@ export const Packages = () => {
             await updateDoc(tripRef, packages);
 
             setVisible(false)
+
             window.location.reload();
         } catch (error) {
             console.log('Error editing trip:', error);
         }
     };
+
+    
 
 
     // Function to remove a trip
@@ -279,7 +283,7 @@ export const Packages = () => {
                                         <i
                                             onClick={() => handleDeleteImage(index)}
                                             className="pi pi-times "
-    
+
                                             style={{
                                                 position: 'absolute',
                                                 top: '5px',
