@@ -6,13 +6,23 @@ import { Image } from 'primereact/image';
 import React, { useState } from 'react'
 import { db } from '../../../api/firebase';
 import { Tag } from 'primereact/tag';
+import axios from 'axios';
 
 const TableOrderHotels: React.FC<{ orders: any }> = ({ orders }) => {
   const [loading, setLoading] = useState(false)
 
-  const CancelOrder = async (orderId: any) => {
+  const CancelOrder = async (orderId: string, usersId: string) => {
     try {
       setLoading(true);
+      await axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+        subID: usersId,
+        appId: 8562,
+        appToken: 'c50yB7EcbMr6VOtSVF0qNb',
+        title: 'ยกเลิกสำเร็จ',
+        message: `คำสั่งซื้อ${orderId}`,
+        bigPictureURL: "enter image"
+      });
+
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { status: "Failed" });
       console.log('Trip removed successfully!');
@@ -38,9 +48,18 @@ const TableOrderHotels: React.FC<{ orders: any }> = ({ orders }) => {
     }
   };
 
-  const enterOrder = async (orderId: string) => {
+  const enterOrder = async (orderId: string, usersId: string) => {
     try {
       setLoading(true);
+      await axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+        subID: usersId,
+        appId: 8562,
+        appToken: 'c50yB7EcbMr6VOtSVF0qNb',
+        title: 'สั่งซื้อสำเร็จ',
+        message: `คำสั่งซื้อ${orderId}`,
+        bigPictureURL: "enter image"
+      });
+
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, { status: "Success" });
       window.location.reload();
@@ -86,7 +105,7 @@ const TableOrderHotels: React.FC<{ orders: any }> = ({ orders }) => {
             </div>}>
 
         </Column>
-        
+
         <Column field="note" header="หมายเหตุ" style={{ minWidth: '12rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-12rem">{rowData.note}</div>} ></Column>
 
         <Column
@@ -101,7 +120,7 @@ const TableOrderHotels: React.FC<{ orders: any }> = ({ orders }) => {
                   severity="success"
                   size="small"
                   style={{ fontSize: 12, padding: 3 }}
-                  onClick={() => enterOrder(rowData.id)}
+                  onClick={() => enterOrder(rowData.id, rowData.usersId)}
                 /> : ''
               }
             </div>
@@ -120,7 +139,7 @@ const TableOrderHotels: React.FC<{ orders: any }> = ({ orders }) => {
                   severity="danger"
                   size="small"
                   style={{ fontSize: 12, padding: 3 }}
-                  onClick={(e) => { e.preventDefault; CancelOrder(rowData.id) }} /> : <Button
+                  onClick={(e) => { e.preventDefault; CancelOrder(rowData.id, rowData.usersId) }} /> : <Button
                   icon="pi pi-trash"
                   severity="danger"
                   rounded

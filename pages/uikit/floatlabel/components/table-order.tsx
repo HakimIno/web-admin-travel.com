@@ -14,13 +14,21 @@ const TableOrder: React.FC<{
 }> = ({ orders }) => {
     const [loading, setLoading] = useState(false)
 
-    const CancelOrder = async (orderId: any) => {
+    const CancelOrder = async (orderId: string, usersId: string) => {
         try {
             setLoading(true);
+
+            await axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+                subID: usersId,
+                appId: 8562,
+                appToken: 'c50yB7EcbMr6VOtSVF0qNb',
+                title: 'ยกเลิกสำเร็จ',
+                message: `คำสั่งซื้อ${orderId}`,
+                bigPictureURL: "enter image"
+            });
+
             const orderRef = doc(db, 'orders', orderId);
             await updateDoc(orderRef, { status: "Failed" });
-
-            await sendNotification()
 
             console.log('Trip removed successfully!');
             window.location.reload();
@@ -31,7 +39,7 @@ const TableOrder: React.FC<{
         }
     };
 
-    const DeleteOrder = async (orderId: any) => {
+    const DeleteOrder = async (orderId: string) => {
         try {
             setLoading(true);
             const orderRef = doc(db, 'orders', orderId);
@@ -45,39 +53,26 @@ const TableOrder: React.FC<{
         }
     };
 
-    const enterOrder = async (orderId: string) => {
+    const enterOrder = async (orderId: string, usersId: string) => {
         try {
             setLoading(true);
+
+            await axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+                subID: usersId,
+                appId: 8562,
+                appToken: 'c50yB7EcbMr6VOtSVF0qNb',
+                title: 'สั่งซื้อสำเร็จ',
+                message: `คำสั่งซื้อ${orderId}`,
+                bigPictureURL: "enter image"
+            });
+
             const orderRef = doc(db, 'orders', orderId);
             await updateDoc(orderRef, { status: "Success" });
+
             window.location.reload();
         } catch (error) {
             console.log('Error trip:', error);
         }
-    }
-
-    const sendNotification = () => {
-        const currentDate = new Date();
-        const formattedDate = `${currentDate.getMonth() + 1}-${currentDate.getDate()}-${currentDate.getFullYear()} ${currentDate.getHours()}:${currentDate.getMinutes()}${currentDate.getHours() < 12 ? 'AM' : 'PM'}`;
-
-        const requestBody = {
-            appId: 8562,
-            appToken: "c50yB7EcbMr6VOtSVF0qNb",
-            title: "Aumanan Junket",
-            body: "ยกเลิกสำเร็จ",
-            dateSent: formattedDate,
-            bigPictureURL: 'image url cancel'
-        };
-
-        axios.post('https://app.nativenotify.com/api/notification', requestBody)
-            .then(response => {
-                console.log('Notification sent successfully:', response.data);
-                // Handle the response or perform any necessary actions
-            })
-            .catch(error => {
-                console.error('Error sending notification:', error);
-                // Handle the error gracefully
-            });
     }
 
     return (
@@ -120,7 +115,7 @@ const TableOrder: React.FC<{
                 <Column field="note" header="หมายเหตุ" style={{ minWidth: '12rem', textAlign: 'center' }} body={(rowData) => <div className="line-clamp-2 w-12rem">{rowData.note}</div>} ></Column>
 
                 <Column
-                    field="status"
+
                     header="#"
                     style={{ minWidth: '6rem', textAlign: 'center' }}
                     body={(rowData) => (
@@ -131,7 +126,7 @@ const TableOrder: React.FC<{
                                     severity="success"
                                     size="small"
                                     style={{ fontSize: 12, padding: 3 }}
-                                    onClick={() => enterOrder(rowData.id)}
+                                    onClick={() => enterOrder(rowData.id, rowData.usersId)}
                                 /> : ''
                             }
                         </div>
@@ -139,7 +134,6 @@ const TableOrder: React.FC<{
                     }>
                 </Column>
                 <Column
-                    field="status"
                     header="#"
                     style={{ minWidth: '6rem', textAlign: 'center' }}
                     body={(rowData) => (
@@ -150,7 +144,7 @@ const TableOrder: React.FC<{
                                     severity="danger"
                                     size="small"
                                     style={{ fontSize: 12, padding: 3 }}
-                                    onClick={(e) => { e.preventDefault; CancelOrder(rowData.id) }} /> : <Button
+                                    onClick={(e) => { e.preventDefault; CancelOrder(rowData.id, rowData.usersId) }} /> : <Button
                                     icon="pi pi-trash"
                                     severity="danger"
                                     rounded

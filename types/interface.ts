@@ -9,6 +9,7 @@ export interface Users {
 export interface Orders {
     id: number,
     title: string,
+    usersId: string,
     category: string,
     price: string,
     email: string,

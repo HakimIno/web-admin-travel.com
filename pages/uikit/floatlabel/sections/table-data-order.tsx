@@ -16,6 +16,8 @@ export const TableDataOrder = () => {
     const [orderSuccess, setOrderSuccess] = useState<Orders[]>([])
     const [orderFailed, setOrderFailed] = useState<Orders[]>([])
 
+    
+
     useEffect(() => {
         const fetchData = async () => {
             try {

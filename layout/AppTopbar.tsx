@@ -28,6 +28,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const [visible, setVisible] = useState(false);
     const [notification, setNotification] = useState<Notifys[]>([])
 
+    const [read, setRead] = useState('')
 
     useImperativeHandle(ref, () => ({
         menubutton: menubuttonRef.current,
@@ -46,6 +47,15 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             try {
                 const notifys = await fetchNotificationAdmin();
 
+                if (notifys && notifys.length > 0) {
+                    const storedRead = localStorage.getItem('readNotify');
+                    const latestNotifyId = notifys[notifys.length - 1].id;
+
+                    if (latestNotifyId !== storedRead) {
+                        localStorage.removeItem('readNotify');
+                    }
+                }
+
                 setNotification(notifys as unknown as Notifys[])
 
 
@@ -54,19 +64,21 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             }
         }
         fetchData()
-    },[]);
+    }, []);
+
+    useEffect(() => {
+        const storedRead = localStorage.getItem('readNotify');
+        if (storedRead) {
+            setRead(storedRead)
+        }
+
+    }, []);
 
     const handleButtonClick = async () => {
-        try {
-          const notifys = await fetchNotificationAdmin();
-          setNotification(notifys  as unknown as Notifys[] );
-        } catch (error) {
-          console.log(error);
-        }
-        setNotification([]);
+        localStorage.setItem('readNotify', 'read');
         setVisible(false)
-      };
-      
+    };
+
 
     return (
         <div className="layout-topbar">
@@ -88,17 +100,14 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 <button type="button" className="p-link layout-topbar-button relative" onClick={() => setVisible(true)}>
 
                     <i className="pi pi-bell" style={{ fontSize: 24 }}></i>
-                    {notification && notification.length > 0 ? (
-                        <div style={{ backgroundColor: 'red', position: 'absolute', right: '5px', top: '3px', borderRadius: 32, width: 15, height: 17, justifyItems: 'center', alignItems: 'center' }}>
-                            <p style={{ textAlign: 'center', color: 'white', fontSize: 12 }}>{notification.length}</p>
+                    {!read && (
+                        <div style={{ backgroundColor: 'red', position: 'absolute', right: '10px', top: '6px', borderRadius: 32, width: 10, height: 10, justifyItems: 'center', alignItems: 'center' }}>
                         </div>
-
-                    ) : ""}
+                    )}
                 </button>
 
                 <button type="button" className="p-link layout-topbar-button" onClick={(e) => handleLogout(e)}>
                     <i className="pi pi-sign-out"></i>
-
                 </button>
 
                 <Dialog header="แจ้งเตือน" visible={visible} position="top-right" style={{ width: '30vw' }} onHide={handleButtonClick} draggable={false} resizable={false}>
