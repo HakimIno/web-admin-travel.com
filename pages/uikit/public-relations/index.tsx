@@ -223,6 +223,26 @@ const PublicRelations = () => {
                         <TabPanel header="เพิ่มประชาสัมพันธ์">
                             <div className="field">
                                 <label htmlFor="title" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพประชาสัมพันธ์ (URL)</label>
+                                <div className="block">
+                                    {urlImagePromo && (
+                                        <div style={{ position: 'relative', width: 200 }}>
+                                            <img className=" shadow-2  mx-auto border-round" width={200} height={120} src={urlImagePromo} alt="" />
+                                            <i
+                                                onClick={() => setUrlImagePromo("")}
+                                                className="pi pi-times "
+
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '5px',
+                                                    right: '5px',
+                                                    color: 'red',
+                                                    cursor: 'pointer',
+                                                    fontSize: '1.2rem',
+                                                }}
+                                            ></i>
+                                        </div>
+                                    )}
+                                </div>
                                 <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" maxFileSize={1000000} onUpload={handleFileUpload} auto chooseLabel="Browse" />
                             </div>
                             <div className="field">

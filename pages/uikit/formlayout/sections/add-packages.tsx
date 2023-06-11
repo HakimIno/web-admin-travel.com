@@ -16,7 +16,6 @@ export const AddPackages = () => {
     const [imageURL, setImageURL] = useState("")
     const [location, setLocation] = useState("")
     const [description, setDescription] = useState("")
-    const [category, setCategory] = useState("")
     const [tripsDay, setTripsDay] = useState("")
     const [rating, setRating] = useState(0)
     const [price, setPrice] = useState("")
@@ -55,7 +54,6 @@ export const AddPackages = () => {
                 title: title,
                 image: imageURL,
                 location: location,
-                category: category,
                 description: description,
                 gallery: gallery,
                 tripsDay: tripsDay,
@@ -158,17 +156,32 @@ export const AddPackages = () => {
             </div>
             <div className="field">
                 <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ <span className="text-red-500 text-sm">*เลือกรูปแล้วจะอัปโหลดอัตโนมัติ</span></label>
-                <FileUpload  mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
+                <div className="block">
+                    {imageURL && (
+                        <div style={{ position: 'relative', width: 200 }}>
+                            <img className=" shadow-2  mx-auto border-round" width={200} height={120} src={imageURL} alt="" />
+                            <i
+                                onClick={() => setImageURL("")}
+                                className="pi pi-times "
+
+                                style={{
+                                    position: 'absolute',
+                                    top: '5px',
+                                    right: '5px',
+                                    color: 'red',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                }}
+                            ></i>
+                        </div>
+                    )}
+                </div>
+                <FileUpload mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
 
             </div>
             <div className="field">
                 <label htmlFor="location" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>ประเทศ</label>
                 <InputText id="location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
-            <div className="field">
-                <label htmlFor="category" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>หมวดหมู่</label>
-                <Dropdown value={category} onChange={(e) => setCategory(e.value)} options={_category}
-                    placeholder="หมวดหมู่" className="w-full md:w-14rem" />
             </div>
             <div className="field">
                 <label htmlFor="description" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รายละเอียด</label>

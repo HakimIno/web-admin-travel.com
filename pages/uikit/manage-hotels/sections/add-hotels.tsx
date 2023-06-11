@@ -132,6 +132,26 @@ export const AddHotels = () => {
             </div>
             <div className="field">
                 <label htmlFor="image" style={{ fontWeight: 'normal', fontSize: 16, marginTop: 10 }}>รูปภาพโปสเตอร์ <span className="text-red-500 text-sm">*เลือกรูปแล้วจะอัปโหลดอัตโนมัติ</span></label>
+                <div className="block">
+                    {imageURL && (
+                        <div style={{ position: 'relative', width: 200 }}>
+                            <img className=" shadow-2  mx-auto border-round" width={200} height={120} src={imageURL} alt="" />
+                            <i
+                                onClick={() => setImageURL("")}
+                                className="pi pi-times "
+
+                                style={{
+                                    position: 'absolute',
+                                    top: '5px',
+                                    right: '5px',
+                                    color: 'red',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                }}
+                            ></i>
+                        </div>
+                    )}
+                </div>
                 <FileUpload mode="basic" name="demo" url="http://localhost:3001/api/upload" accept="image/*" auto maxFileSize={2000000} chooseLabel="เลือกรูป" onUpload={handleFileUpload} />
             </div>
             <div className="field">
